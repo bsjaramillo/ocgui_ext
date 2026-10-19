@@ -8,7 +8,7 @@ OpenCode GUI talks to a locally running OpenCode server, so you get the full age
 
 ## Features
 
-- **Native chat panel** in the Activity Bar (`OpenCode` icon).
+- **Native chat panel** in the Activity Bar (`OpenChat` icon).
 - **Editor context**: the active file, cursor line and selection are attached automatically, or as an explicit `@path#Lx-y` reference.
 - **Attach files**: click the 📎 button in the composer to attach any files; they are sent to the model as real file parts.
 - **Sessions**: list, create, switch and delete sessions.
@@ -30,7 +30,7 @@ OpenCode GUI talks to a locally running OpenCode server, so you get the full age
 
 1. Install the OpenCode CLI v2 and make sure `opencode --version` works in a terminal.
 2. Open a folder in VS Code.
-3. Click the **OpenCode** icon in the Activity Bar (or run `OpenCode: Open Chat`, `Ctrl+Alt+O`).
+3. Click the **OpenChat** icon in the Activity Bar (or run `OpenChat: Open Chat`, `Ctrl+Alt+O`).
 4. Wait for the status to become *ready* and start chatting.
 
 The extension starts its own OpenCode server per window (with a random local password). The **Output → OpenChat** channel shows the detected CLI version and any server logs.
@@ -39,11 +39,11 @@ The extension starts its own OpenCode server per window (with a random local pas
 
 | Command | Description |
 | --- | --- |
-| `OpenCode: Open Chat` | Focus the chat panel (`Ctrl+Alt+O` / `Cmd+Alt+O`). |
-| `OpenCode: New Session` | Start a new session. |
-| `OpenCode: Ask About Selection` | Send the current selection as context. |
-| `OpenCode: Add File to Chat` | Add the current file reference to the composer. |
-| `OpenCode: Restart Server` | Restart the OpenCode server. |
+| `OpenChat: Open Chat` | Focus the chat panel (`Ctrl+Alt+O` / `Cmd+Alt+O`). |
+| `OpenChat: New Session` | Start a new session. |
+| `OpenChat: Ask About Selection` | Send the current selection as context. |
+| `OpenChat: Add File to Chat` | Add the current file reference to the composer. |
+| `OpenChat: Restart Server` | Restart the OpenCode server. |
 
 ## Settings
 

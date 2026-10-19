@@ -1,19 +1,19 @@
 {
-  "name": "openchat",
+  "name": "openchat-opencode",
   "displayName": "OpenChat",
   "description": "OpenCode GUI for VSCode",
   "version": "0.0.1",
-  "publisher": "your-publisher-id",
+  "publisher": "bsjaramillo",
   "license": "MIT",
   "icon": "media/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/openchat.git"
+    "url": "https://github.com/bsjaramillo/ocgui_ext.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/openchat/issues"
+    "url": "https://github.com/bsjaramillo/ocgui_ext/issues"
   },
-  "homepage": "https://github.com/your-username/openchat#readme",
+  "homepage": "https://github.com/bsjaramillo/ocgui_ext#readme",
   "engines": {
     "vscode": "^1.85.0"
   },
