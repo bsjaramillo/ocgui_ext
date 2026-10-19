@@ -1,0 +1,155 @@
+{
+  "name": "openchat",
+  "displayName": "OpenChat",
+  "description": "OpenCode GUI for VSCode",
+  "version": "0.0.1",
+  "publisher": "your-publisher-id",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/openchat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/openchat/issues"
+  },
+  "homepage": "https://github.com/your-username/openchat#readme",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "opencode",
+    "ai",
+    "chat",
+    "assistant",
+    "agent",
+    "copilot"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "openchat",
+          "title": "OpenChat",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "openchat": [
+        {
+          "type": "webview",
+          "id": "openchat.chatView",
+          "name": "Chat"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "openchat.openChat",
+        "title": "OpenChat: Open Chat",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "openchat.newSession",
+        "title": "OpenChat: New Session",
+        "icon": "$(add)"
+      },
+      {
+        "command": "openchat.askSelection",
+        "title": "OpenChat: Ask About Selection"
+      },
+      {
+        "command": "openchat.addFileToChat",
+        "title": "OpenChat: Add File to Chat"
+      },
+      {
+        "command": "openchat.restartServer",
+        "title": "OpenChat: Restart Server"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "openchat.askSelection",
+          "when": "editorHasSelection",
+          "group": "openchat@1"
+        },
+        {
+          "command": "openchat.addFileToChat",
+          "group": "openchat@2"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "openchat.openChat",
+        "key": "ctrl+alt+o",
+        "mac": "cmd+alt+o"
+      }
+    ],
+    "configuration": {
+      "title": "OpenChat",
+      "properties": {
+        "openchat.opencodePath": {
+          "type": "string",
+          "default": "opencode",
+          "description": "Path or command used to launch the OpenCode CLI."
+        },
+        "openchat.hostname": {
+          "type": "string",
+          "default": "127.0.0.1",
+          "description": "Hostname of the OpenCode server."
+        },
+        "openchat.serverPort": {
+          "type": "number",
+          "default": 0,
+          "description": "Port to use. 0 means auto: pick a random free port."
+        },
+        "openchat.reuseServer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Try to reuse an existing OpenCode server before spawning a new one."
+        },
+        "openchat.model": {
+          "type": "string",
+          "default": "",
+          "description": "Model in provider/model format. Empty uses the OpenCode default."
+        },
+        "openchat.agent": {
+          "type": "string",
+          "default": "",
+          "description": "Agent to use. Empty uses the OpenCode default."
+        },
+        "openchat.includeSelectionText": {
+          "type": "boolean",
+          "default": true,
+          "description": "Attach the selected text as context, not only the file reference."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "typecheck": "tsc --noEmit",
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "vscode:prepublish": "node esbuild.js --production"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.4.0"
+  }
+}

@@ -1,0 +1,19 @@
+# Sources and build tooling
+src/**
+.vscode/**
+.vscode-test/**
+out/**
+node_modules/**
+esbuild.js
+tsconfig.json
+package-lock.json
+.gitignore
+
+# Source maps and TypeScript sources
+**/*.map
+**/*.ts
+**/*.tsx
+
+# Keep runtime assets
+!media/**
+!dist/extension.js
