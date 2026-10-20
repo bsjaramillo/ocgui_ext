@@ -2,6 +2,20 @@
 
 All notable changes to the OpenChat extension are documented here.
 
+## [0.1.0] - 2026-10-20
+
+### Added
+
+- Session list is now scoped to the current workspace (only sessions from the open folder are shown).
+- Rename sessions from the panel (✏️ button next to the session picker).
+- "Thinking" indicator while the model is working.
+- Toggle to show or hide the model's reasoning ("Thinking" button).
+- Diagnostics in the **OpenChat** output channel (server URL, init summary, prompts, event stream).
+
+### Fixed
+
+- Sending a message with no active session was silently ignored; it now creates a session on the fly or reports a clear error.
+
 ## [0.0.1] - 2026-10-19
 
 ### Added

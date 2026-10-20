@@ -17,6 +17,7 @@
     permissions: [],
     model: "",
     attachments: [],
+    showThinking: persisted.showThinking === true,
   }
 
   const els = {
@@ -24,9 +25,13 @@
     agentSelect: document.getElementById("agent-select"),
     modelSelect: document.getElementById("model-select"),
     newSession: document.getElementById("new-session"),
+    renameSession: document.getElementById("rename-session"),
     deleteSession: document.getElementById("delete-session"),
     restart: document.getElementById("restart"),
     usage: document.getElementById("usage"),
+    thinking: document.getElementById("thinking"),
+    thinkingLabel: document.getElementById("thinking-label"),
+    thinkingToggle: document.getElementById("thinking-toggle"),
     changesToggle: document.getElementById("changes-toggle"),
     changesCount: document.getElementById("changes-count"),
     changes: document.getElementById("changes"),
@@ -67,6 +72,7 @@
         renderModels()
         restoreSelection(msg)
         renderContext()
+        renderThinkingToggle()
         renderMessages(true)
         break
       case "session":
@@ -372,6 +378,7 @@
         if (part.synthetic) continue
         out.push('<div class="part-text">' + renderMarkdown(part.text || "") + "</div>")
       } else if (part.type === "reasoning") {
+        if (!state.showThinking) continue
         out.push('<div class="part-reasoning">' + escapeHtml(part.text || "") + "</div>")
       } else if (part.type === "tool") {
         out.push(renderTool(part))
@@ -470,6 +477,14 @@
   function renderBusy() {
     els.send.classList.toggle("hidden", state.busy)
     els.stop.classList.toggle("hidden", !state.busy)
+    els.thinking.classList.toggle("hidden", !state.busy)
+  }
+
+  function renderThinkingToggle() {
+    els.thinkingToggle.classList.toggle("active", state.showThinking)
+    els.thinkingToggle.title = state.showThinking
+      ? "Hide the model's thinking"
+      : "Show the model's thinking"
   }
 
   function renderContext() {
@@ -721,6 +736,21 @@
   })
   els.input.addEventListener("input", autoGrow)
   els.newSession.addEventListener("click", () => vscode.postMessage({ type: "newSession" }))
+  els.renameSession.addEventListener("click", () => {
+    if (!state.sessionId) return
+    const current = state.sessions.find((s) => s.id === state.sessionId)
+    vscode.postMessage({
+      type: "renameSession",
+      sessionId: state.sessionId,
+      currentTitle: current ? current.title : "",
+    })
+  })
+  els.thinkingToggle.addEventListener("click", () => {
+    state.showThinking = !state.showThinking
+    persistState({ showThinking: state.showThinking })
+    renderThinkingToggle()
+    renderMessages(false)
+  })
   els.deleteSession.addEventListener("click", () => {
     if (state.sessionId) vscode.postMessage({ type: "deleteSession", sessionId: state.sessionId })
   })

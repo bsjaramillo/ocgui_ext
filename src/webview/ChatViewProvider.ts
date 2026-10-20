@@ -121,6 +121,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       case "deleteSession":
         void this.controller?.deleteSession(msg.sessionId)
         break
+      case "renameSession":
+        void this.renameSession(msg.sessionId, msg.currentTitle)
+        break
       case "refreshDiffs":
         void this.controller?.refreshDiffs()
         break
@@ -152,6 +155,16 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         void vscode.commands.executeCommand("openchat.restartServer")
         break
     }
+  }
+
+  private async renameSession(sessionId: string, currentTitle?: string): Promise<void> {
+    const title = await vscode.window.showInputBox({
+      prompt: "Session title",
+      placeHolder: "New session title",
+      value: currentTitle ?? "",
+    })
+    if (title === undefined) return
+    await this.controller?.renameSession(sessionId, title)
   }
 
   private async pickFiles(): Promise<void> {
@@ -238,6 +251,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       <div class="row">
         <select id="session-select" title="Session"></select>
         <button id="new-session" class="icon-btn" title="New session">+</button>
+        <button id="rename-session" class="icon-btn" title="Rename session">&#9998;</button>
         <button id="delete-session" class="icon-btn" title="Delete session">&#128465;</button>
         <button id="restart" class="icon-btn" title="Restart server">&#8635;</button>
       </div>
@@ -247,6 +261,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       </div>
       <div class="row usage-row">
         <span id="usage" title="Session usage">—</span>
+        <button id="thinking-toggle" class="text-btn" title="Show or hide the model's thinking">Thinking</button>
         <button id="changes-toggle" class="text-btn" title="Toggle changed files">Changes <span id="changes-count">0</span></button>
       </div>
     </header>
@@ -270,6 +285,11 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     </div>
 
     <main id="messages"></main>
+
+    <div id="thinking" class="hidden">
+      <span class="spinner"></span>
+      <span id="thinking-label">OpenCode is thinking…</span>
+    </div>
 
     <div id="status" class="hidden"></div>
 

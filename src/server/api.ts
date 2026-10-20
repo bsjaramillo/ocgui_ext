@@ -205,9 +205,15 @@ export class OpenCodeApi {
 
   async listSessions(directory?: string, limit = 50): Promise<SessionInfo[]> {
     const res = await this.request<{ data: SessionInfo[] }>("GET", "/api/session", {
-      query: { limit, order: "desc", "location[directory]": directory },
+      query: { limit, order: "desc", directory },
     })
     return res.data ?? []
+  }
+
+  async updateSession(sessionID: string, title: string): Promise<void> {
+    await this.request<void>("PATCH", `/api/session/${encodeURIComponent(sessionID)}`, {
+      body: { title },
+    })
   }
 
   async createSession(opts: {

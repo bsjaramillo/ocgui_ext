@@ -68,6 +68,11 @@ export class ChatController {
 
     const messages = sessionId ? await this.loadMessages(sessionId) : []
 
+    this.log(
+      `[init] directory=${this.options.directory} agents=${agents.length} models=${models.length} ` +
+        `sessions=${sessions.length} sessionId=${sessionId ?? "none"} model=${this.model ?? "default"}`,
+    )
+
     this.emit({
       type: "init",
       sessionId,
@@ -85,13 +90,28 @@ export class ChatController {
   }
 
   async sendPrompt(text: string, context?: EditorContext, attachments?: Attachment[]): Promise<void> {
-    if (!this.sessionId) return
+    if (!this.sessionId) {
+      const created = await this.createSession()
+      if (!created) {
+        this.emit({
+          type: "error",
+          message: "No active session. Check the Output → OpenChat channel, then use “New Session”.",
+        })
+        return
+      }
+      this.sessionId = created
+      const sessions = await this.loadSessions()
+      this.emit({ type: "session", sessionId: created, messages: [], sessions })
+    }
     const files = (attachments ?? []).map((a) => ({ uri: a.url, name: a.filename }))
+    this.log(`[prompt] session=${this.sessionId} chars=${text.length} files=${files.length}`)
     this.setBusy(true)
     try {
       await this.api.prompt(this.sessionId, { text: this.buildPrompt(text, context), files })
+      this.log("[prompt] accepted")
       await this.reloadMessages()
     } catch (err: any) {
+      this.log(`[prompt] failed: ${String(err?.message ?? err)}`)
       this.emit({ type: "error", message: this.errorMessage(err) })
       this.setBusy(false)
     } finally {
@@ -143,6 +163,19 @@ export class ChatController {
     } else {
       this.emit({ type: "sessions", sessions })
     }
+  }
+
+  async renameSession(id: string, title: string): Promise<void> {
+    const trimmed = title.trim()
+    if (!trimmed) return
+    try {
+      await this.api.updateSession(id, trimmed)
+    } catch (err: any) {
+      this.emit({ type: "error", message: this.errorMessage(err) })
+      return
+    }
+    const sessions = await this.loadSessions()
+    this.emit({ type: "sessions", sessions })
   }
 
   async revert(messageId: string): Promise<void> {
@@ -276,8 +309,10 @@ export class ChatController {
         agent: this.agent,
         model: this.parseModel(),
       })
+      this.log(`[session] created ${session?.id ?? "none"}`)
       return session?.id ?? null
     } catch (err: any) {
+      this.log(`[session] create failed: ${String(err?.message ?? err)}`)
       this.emit({ type: "error", message: String(err?.message ?? err) })
       return null
     }
@@ -331,10 +366,12 @@ export class ChatController {
   private async subscribe(): Promise<void> {
     while (!this.abortController.signal.aborted) {
       try {
+        this.log("[events] connected")
         await this.api.subscribe((event) => this.handleEvent(event), this.abortController.signal)
+        if (!this.abortController.signal.aborted) this.log("[events] stream ended, reconnecting…")
       } catch (err: any) {
         if (this.abortController.signal.aborted) return
-        this.options.output.appendLine(`[events] ${String(err?.message ?? err)}`)
+        this.log(`[events] error: ${String(err?.message ?? err)}`)
       }
       if (this.abortController.signal.aborted) return
       await new Promise((r) => setTimeout(r, 1500))
@@ -390,6 +427,10 @@ export class ChatController {
     if (this.busy === busy) return
     this.busy = busy
     this.emit({ type: "busy", busy })
+  }
+
+  private log(message: string): void {
+    this.options.output.appendLine(message)
   }
 
   private emit(msg: ServerMessage): void {

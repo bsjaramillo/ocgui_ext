@@ -11,8 +11,9 @@ OpenCode GUI talks to a locally running OpenCode server, so you get the full age
 - **Native chat panel** in the Activity Bar (`OpenChat` icon).
 - **Editor context**: the active file, cursor line and selection are attached automatically, or as an explicit `@path#Lx-y` reference.
 - **Attach files**: click the 📎 button in the composer to attach any files; they are sent to the model as real file parts.
-- **Sessions**: list, create, switch and delete sessions.
+- **Sessions**: list, create, switch, rename and delete sessions. Only sessions from the current workspace are shown.
 - **Models & agents**: pick a model (grouped by provider) and an agent per session.
+- **Thinking**: a live indicator while the model works, plus a toggle to show or hide the model's reasoning.
 - **Streaming responses** with markdown rendering, copy/insert code actions and file links.
 - **Changed files**: see the diff of files the agent edited and open them side by side.
 - **Revert**: roll a session back to before a given message.

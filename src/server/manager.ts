@@ -8,6 +8,7 @@ export interface ServerStartOptions {
   reuse: boolean
   opencodePath: string
   cwd?: string
+  onLog?: (line: string) => void
 }
 
 export interface CliInfo {
@@ -80,6 +81,7 @@ export class ServerManager {
   private _password = ""
   private logs: string[] = []
   private listening = false
+  private onLog?: (line: string) => void
 
   get url(): string {
     return this._url
@@ -91,17 +93,21 @@ export class ServerManager {
   }
 
   async start(opts: ServerStartOptions): Promise<void> {
+    this.onLog = opts.onLog
     if (opts.reuse) {
       const candidates = opts.port ? [opts.port] : [4096]
       for (const p of candidates) {
         const url = `http://${opts.hostname}:${p}`
         const api = new OpenCodeApi({ baseUrl: url })
-        if (await api.ready()) {
+        const probe = await api.probe()
+        if (probe.ok) {
           this._url = url
           this._password = ""
           this._api = api
+          this.onLog?.(`[server] reusing ${url}`)
           return
         }
+        this.onLog?.(`[server] no reusable server on ${url} (${probe.detail})`)
       }
     }
 
@@ -182,6 +188,8 @@ export class ServerManager {
 
   private pushLog(line: string): void {
     if (/server listening on/i.test(line)) this.listening = true
+    const trimmed = line.trim()
+    if (trimmed) this.onLog?.(`[server] ${trimmed}`)
     this.logs.push(line)
     if (this.logs.length > 200) this.logs.shift()
   }

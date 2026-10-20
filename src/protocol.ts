@@ -76,6 +76,7 @@ export type ClientMessage =
   | { type: "newSession" }
   | { type: "switchSession"; sessionId: string }
   | { type: "deleteSession"; sessionId: string }
+  | { type: "renameSession"; sessionId: string; currentTitle?: string }
   | { type: "refreshDiffs" }
   | { type: "openDiff"; file: string }
   | { type: "revert"; messageId: string }

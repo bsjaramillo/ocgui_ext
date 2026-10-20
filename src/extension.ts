@@ -53,7 +53,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         reuse: cfg.get<boolean>("reuseServer", true),
         opencodePath,
         cwd,
+        onLog: (line) => output.appendLine(line),
       })
+      output.appendLine(`[server] listening at ${server.url}`)
 
       controller?.dispose()
       controller = new ChatController(server.api, {
