@@ -2,6 +2,13 @@
 
 All notable changes to the OpenChat extension are documented here.
 
+## [0.1.1] - 2026-10-22
+
+### Fixed
+
+- Long sessions (more than 200 messages) stopped showing new messages. The message list now fetches the newest page instead of the oldest, so your prompts and the replies always appear.
+- The event stream now reconnects if it goes silent for a while (idle watchdog) instead of leaving the panel frozen.
+
 ## [0.1.0] - 2026-10-20
 
 ### Added

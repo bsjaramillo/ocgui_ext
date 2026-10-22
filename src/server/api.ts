@@ -246,12 +246,15 @@ export class OpenCodeApi {
   }
 
   async listMessages(sessionID: string, limit = 200): Promise<any[]> {
+    // The server caps `limit` at 200 and `order=asc` returns the OLDEST page,
+    // which hides new messages in long sessions. Fetch the NEWEST page instead
+    // and reverse it so callers still get oldest -> newest.
     const res = await this.request<{ data: any[] }>(
       "GET",
       `/api/session/${encodeURIComponent(sessionID)}/message`,
-      { query: { order: "asc", limit } },
+      { query: { order: "desc", limit } },
     )
-    return res.data ?? []
+    return (res.data ?? []).slice().reverse()
   }
 
   async prompt(
@@ -367,6 +370,7 @@ export class OpenCodeApi {
           res.on("error", reject)
         },
       )
+      req.setTimeout(90000, () => req.destroy(new Error("event stream idle timeout")))
       req.on("error", (err) => {
         if (signal.aborted) resolve()
         else reject(err)
