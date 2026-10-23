@@ -54,6 +54,8 @@
   window.addEventListener("message", (e) => handle(e.data))
   vscode.postMessage({ type: "ready" })
 
+  let lastFormsSig = ""
+
   function handle(msg) {
     switch (msg.type) {
       case "status":
@@ -82,6 +84,7 @@
         state.messages = (msg.messages || []).map(normalize)
         state.attachments = []
         state.forms = []
+        lastFormsSig = ""
         els.messages.querySelectorAll(".form-card").forEach((el) => el.remove())
         renderAttachments()
         renderSessions()
@@ -199,11 +202,6 @@
     els.messages.querySelectorAll(".msg").forEach((el) => {
       if (!ids.has(el.id)) el.remove()
     })
-    for (const msg of state.messages) {
-      if (!msg.info) continue
-      const el = document.getElementById("msg-" + msg.info.id)
-      if (el) els.messages.appendChild(el)
-    }
     const empty = els.messages.querySelector(".empty")
     if (state.messages.length === 0) {
       if (!empty) {
@@ -216,16 +214,10 @@
       empty.remove()
     }
     for (const perm of state.permissions) {
-      let el = document.getElementById("perm-" + perm.id)
-      if (!el) {
-        renderPermissionCard(perm)
-        el = document.getElementById("perm-" + perm.id)
-      }
-      if (el) els.messages.appendChild(el)
+      if (!document.getElementById("perm-" + perm.id)) renderPermissionCard(perm)
     }
     for (const form of state.forms) {
-      const el = document.getElementById("form-" + form.id)
-      if (el) els.messages.appendChild(el)
+      if (!document.getElementById("form-" + form.id)) renderFormCard(form)
     }
     scrollToBottom(!!force)
   }
@@ -260,13 +252,22 @@
       el.appendChild(meta)
       const empty = els.messages.querySelector(".empty")
       if (empty) empty.remove()
-      els.messages.appendChild(el)
+      const firstCard = els.messages.querySelector(".permission, .form-card")
+      if (firstCard) els.messages.insertBefore(el, firstCard)
+      else els.messages.appendChild(el)
     }
     const bubble = el.querySelector(".bubble")
-    bubble.innerHTML = renderParts(msg)
-    attachCodeActions(bubble)
+    const html = renderParts(msg)
+    if (el.__html !== html) {
+      el.__html = html
+      bubble.innerHTML = html
+      attachCodeActions(bubble)
+    }
     const meta = el.querySelector(".msg-meta")
-    if (meta) meta.textContent = msg.info.role === "assistant" ? messageMeta(msg.info) : ""
+    if (meta) {
+      const metaText = msg.info.role === "assistant" ? messageMeta(msg.info) : ""
+      if (meta.textContent !== metaText) meta.textContent = metaText
+    }
     renderUsage()
     scrollToBottom(false)
   }
@@ -475,18 +476,17 @@
   }
 
   function renderForms() {
+    const sig = state.forms.map((f) => f.id).join(",")
+    if (sig === lastFormsSig) return
+    lastFormsSig = sig
     const ids = new Set()
     for (const form of state.forms) {
       ids.add("form-" + form.id)
-      renderFormCard(form)
+      if (!document.getElementById("form-" + form.id)) renderFormCard(form)
     }
     els.messages.querySelectorAll(".form-card").forEach((el) => {
       if (!ids.has(el.id)) el.remove()
     })
-    for (const form of state.forms) {
-      const el = document.getElementById("form-" + form.id)
-      if (el) els.messages.appendChild(el)
-    }
     scrollToBottom(false)
   }
 

@@ -2,6 +2,12 @@
 
 All notable changes to the OpenChat extension are documented here.
 
+## [0.2.1] - 2026-10-23
+
+### Fixed
+
+- The question form's dropdown closed by itself a couple of seconds after opening it. The panel no longer re-renders or reorders the form while it is open, and it avoids re-writing unchanged messages.
+
 ## [0.2.0] - 2026-10-23
 
 ### Added
