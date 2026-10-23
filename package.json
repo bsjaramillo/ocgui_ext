@@ -2,7 +2,7 @@
   "name": "openchat-opencode",
   "displayName": "OpenChat for OpenCode",
   "description": "OpenCode GUI for VSCode",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publisher": "bsjaramillo",
   "license": "MIT",
   "icon": "media/icon.png",

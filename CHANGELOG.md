@@ -2,6 +2,12 @@
 
 All notable changes to the OpenChat extension are documented here.
 
+## [0.2.0] - 2026-10-23
+
+### Added
+
+- Answer interactive questions from agents (e.g. the plan agent) directly in the panel. OpenCode asks via its form API, so the chat now renders the question with its fields — text, select, number, checkbox, multiselect and external links — and a Submit/Cancel action.
+
 ## [0.1.1] - 2026-10-22
 
 ### Fixed

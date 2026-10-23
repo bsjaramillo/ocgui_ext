@@ -295,6 +295,93 @@ a {
   background: var(--vscode-button-secondaryBackground);
 }
 
+.form-card {
+  border: 1px solid var(--vscode-focusBorder, var(--vscode-panel-border));
+  background: var(--vscode-editor-background);
+  border-radius: var(--oc-radius);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-card .form-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-label {
+  font-size: 12px;
+  color: var(--vscode-foreground);
+}
+
+.form-desc {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.form-field input[type="text"],
+.form-field input[type="number"],
+.form-field select {
+  width: 100%;
+  padding: 4px 6px;
+  border-radius: 4px;
+  color: var(--vscode-input-foreground);
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, transparent);
+  font-family: var(--vscode-font-family);
+  font-size: 12px;
+}
+
+.form-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.form-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.form-actions button {
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  color: var(--vscode-button-foreground);
+  background: var(--vscode-button-background);
+}
+
+.form-actions button.secondary {
+  color: var(--vscode-button-secondaryForeground);
+  background: var(--vscode-button-secondaryBackground);
+}
+
+.form-error {
+  font-size: 11px;
+  color: var(--vscode-errorForeground);
+}
+
+.form-error.hidden {
+  display: none;
+}
+
 #composer {
   border-top: 1px solid var(--vscode-panel-border);
   padding: 6px;

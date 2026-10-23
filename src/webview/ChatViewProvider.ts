@@ -139,6 +139,15 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       case "permission":
         void this.controller?.respondPermission(msg.permissionId, msg.response)
         break
+      case "replyForm":
+        void this.controller?.replyForm(msg.formId, msg.answer)
+        break
+      case "cancelForm":
+        void this.controller?.cancelForm(msg.formId)
+        break
+      case "openExternal":
+        void vscode.env.openExternal(vscode.Uri.parse(msg.url))
+        break
       case "setModel":
         this.controller?.setModel(msg.model)
         break

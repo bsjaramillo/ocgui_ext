@@ -5,6 +5,7 @@ import type {
   ChatMessage,
   EditorContext,
   FileDiffInfo,
+  FormInfo,
   ModelOption,
   ServerMessage,
   SessionSummary,
@@ -33,6 +34,7 @@ export class ChatController {
   private model?: string
   private agent?: string
   private reloadTimer?: NodeJS.Timeout
+  private formTimer?: NodeJS.Timeout
 
   constructor(
     private readonly api: OpenCodeApi,
@@ -42,6 +44,7 @@ export class ChatController {
   dispose(): void {
     this.abortController.abort()
     if (this.reloadTimer) clearTimeout(this.reloadTimer)
+    if (this.formTimer) clearInterval(this.formTimer)
     this.emitter.dispose()
   }
 
@@ -86,6 +89,7 @@ export class ChatController {
     })
 
     await this.loadDiffs()
+    await this.loadForms()
     void this.subscribe()
   }
 
@@ -116,6 +120,7 @@ export class ChatController {
       this.setBusy(false)
     } finally {
       await this.loadDiffs()
+      await this.loadForms()
     }
   }
 
@@ -136,6 +141,7 @@ export class ChatController {
     const sessions = await this.loadSessions()
     this.emit({ type: "session", sessionId: id, messages: [], sessions })
     await this.loadDiffs()
+    await this.loadForms()
   }
 
   async switchSession(id: string): Promise<void> {
@@ -144,6 +150,7 @@ export class ChatController {
     const sessions = await this.loadSessions()
     this.emit({ type: "session", sessionId: id, messages, sessions })
     await this.loadDiffs()
+    await this.loadForms()
   }
 
   async deleteSession(id: string): Promise<void> {
@@ -160,6 +167,7 @@ export class ChatController {
       const messages = next ? await this.loadMessages(next) : []
       this.emit({ type: "session", sessionId: next, messages, sessions })
       await this.loadDiffs()
+      await this.loadForms()
     } else {
       this.emit({ type: "sessions", sessions })
     }
@@ -188,6 +196,7 @@ export class ChatController {
     }
     await this.reloadMessages()
     await this.loadDiffs()
+    await this.loadForms()
   }
 
   async unrevert(): Promise<void> {
@@ -200,10 +209,35 @@ export class ChatController {
     }
     await this.reloadMessages()
     await this.loadDiffs()
+    await this.loadForms()
   }
 
   async refreshDiffs(): Promise<void> {
     await this.loadDiffs()
+    await this.loadForms()
+  }
+
+  async replyForm(formId: string, answer: Record<string, unknown>): Promise<void> {
+    if (!this.sessionId) return
+    try {
+      await this.api.replyForm(this.sessionId, formId, answer)
+    } catch (err: any) {
+      this.emit({ type: "error", message: this.errorMessage(err) })
+      return
+    }
+    await this.loadForms()
+    await this.reloadMessages()
+  }
+
+  async cancelForm(formId: string): Promise<void> {
+    if (!this.sessionId) return
+    try {
+      await this.api.cancelForm(this.sessionId, formId)
+    } catch (err: any) {
+      this.emit({ type: "error", message: this.errorMessage(err) })
+      return
+    }
+    await this.loadForms()
   }
 
   async respondPermission(
@@ -333,6 +367,19 @@ export class ChatController {
     this.emit({ type: "messages", messages })
   }
 
+  private async loadForms(): Promise<void> {
+    if (!this.sessionId) {
+      this.emit({ type: "forms", forms: [] })
+      return
+    }
+    try {
+      const forms = await this.api.listForms(this.sessionId)
+      this.emit({ type: "forms", forms })
+    } catch {
+      // ignore
+    }
+  }
+
   private async loadDiffs(): Promise<void> {
     if (!this.sessionId) {
       this.emit({ type: "diffs", diffs: [] })
@@ -381,7 +428,8 @@ export class ChatController {
   private handleEvent(event: ApiEvent): void {
     const type = event.type
     const data = event.data ?? {}
-    const sessionID: string | undefined = data.sessionID ?? event.durable?.aggregateID
+    const sessionID: string | undefined =
+      data.sessionID ?? data.form?.sessionID ?? event.durable?.aggregateID
 
     if (sessionID && this.sessionId && sessionID !== this.sessionId) return
 
@@ -420,6 +468,10 @@ export class ChatController {
       }
     }
 
+    if (type.startsWith("form.")) {
+      void this.loadForms()
+    }
+
     if (sessionID) this.scheduleReload()
   }
 
@@ -427,6 +479,21 @@ export class ChatController {
     if (this.busy === busy) return
     this.busy = busy
     this.emit({ type: "busy", busy })
+    if (busy) this.startFormPolling()
+    else this.stopFormPolling()
+  }
+
+  private startFormPolling(): void {
+    if (this.formTimer) return
+    this.formTimer = setInterval(() => void this.loadForms(), 2000)
+  }
+
+  private stopFormPolling(): void {
+    if (this.formTimer) {
+      clearInterval(this.formTimer)
+      this.formTimer = undefined
+    }
+    void this.loadForms()
   }
 
   private log(message: string): void {

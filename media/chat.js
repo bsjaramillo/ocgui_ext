@@ -10,6 +10,7 @@
     models: [],
     messages: [],
     diffs: [],
+    forms: [],
     context: undefined,
     includeContext: true,
     busy: false,
@@ -80,6 +81,8 @@
         state.sessions = msg.sessions || []
         state.messages = (msg.messages || []).map(normalize)
         state.attachments = []
+        state.forms = []
+        els.messages.querySelectorAll(".form-card").forEach((el) => el.remove())
         renderAttachments()
         renderSessions()
         renderMessages(true)
@@ -95,6 +98,10 @@
       case "diffs":
         state.diffs = msg.diffs || []
         renderDiffs()
+        break
+      case "forms":
+        state.forms = msg.forms || []
+        renderForms()
         break
       case "context":
         state.context = msg.context
@@ -214,6 +221,10 @@
         renderPermissionCard(perm)
         el = document.getElementById("perm-" + perm.id)
       }
+      if (el) els.messages.appendChild(el)
+    }
+    for (const form of state.forms) {
+      const el = document.getElementById("form-" + form.id)
       if (el) els.messages.appendChild(el)
     }
     scrollToBottom(!!force)
@@ -455,6 +466,203 @@
       removePermission(id)
     })
     return b
+  }
+
+  // ---- forms (interactive questions) ----
+
+  function cssEsc(s) {
+    return String(s).replace(/["\\]/g, "\\$&")
+  }
+
+  function renderForms() {
+    const ids = new Set()
+    for (const form of state.forms) {
+      ids.add("form-" + form.id)
+      renderFormCard(form)
+    }
+    els.messages.querySelectorAll(".form-card").forEach((el) => {
+      if (!ids.has(el.id)) el.remove()
+    })
+    for (const form of state.forms) {
+      const el = document.getElementById("form-" + form.id)
+      if (el) els.messages.appendChild(el)
+    }
+    scrollToBottom(false)
+  }
+
+  function renderFormCard(form) {
+    if (document.getElementById("form-" + form.id)) return
+    const card = document.createElement("div")
+    card.className = "form-card"
+    card.id = "form-" + form.id
+
+    const title = document.createElement("div")
+    title.className = "form-title"
+    title.textContent = form.title || "Question"
+    card.appendChild(title)
+
+    for (const f of form.fields || []) {
+      if (f.hidden) continue
+      card.appendChild(formField(f))
+    }
+
+    const err = document.createElement("div")
+    err.className = "form-error hidden"
+    card.appendChild(err)
+
+    const actions = document.createElement("div")
+    actions.className = "form-actions"
+    const submit = document.createElement("button")
+    submit.textContent = "Submit"
+    submit.addEventListener("click", () => submitForm(form, card, err))
+    const cancel = document.createElement("button")
+    cancel.className = "secondary"
+    cancel.textContent = "Cancel"
+    cancel.addEventListener("click", () => vscode.postMessage({ type: "cancelForm", formId: form.id }))
+    actions.appendChild(submit)
+    actions.appendChild(cancel)
+    card.appendChild(actions)
+
+    els.messages.appendChild(card)
+  }
+
+  function formField(f) {
+    const row = document.createElement("div")
+    row.className = "form-field"
+
+    if (f.type === "external") {
+      const label = document.createElement("div")
+      label.className = "form-label"
+      label.textContent = f.title || f.key
+      const btn = document.createElement("button")
+      btn.className = "secondary"
+      btn.textContent = "Open"
+      btn.addEventListener("click", () => vscode.postMessage({ type: "openExternal", url: f.url }))
+      row.appendChild(label)
+      if (f.description) row.appendChild(formDesc(f.description))
+      row.appendChild(btn)
+      return row
+    }
+
+    const label = document.createElement("label")
+    label.className = "form-label"
+    label.textContent = (f.title || f.key) + (f.required ? " *" : "")
+    row.appendChild(label)
+    if (f.description) row.appendChild(formDesc(f.description))
+
+    if (f.type === "boolean") {
+      const cb = document.createElement("input")
+      cb.type = "checkbox"
+      cb.dataset.key = f.key
+      cb.checked = f.default === true
+      label.htmlFor = "fld-" + f.key
+      cb.id = "fld-" + f.key
+      cb.style.marginLeft = "6px"
+      label.appendChild(cb)
+      return row
+    }
+
+    if (f.type === "multiselect") {
+      const wrap = document.createElement("div")
+      wrap.className = "form-options"
+      wrap.dataset.key = f.key
+      for (const opt of f.options || []) {
+        const l = document.createElement("label")
+        l.className = "form-option"
+        const cb = document.createElement("input")
+        cb.type = "checkbox"
+        cb.value = opt.value
+        if (Array.isArray(f.default) && f.default.includes(opt.value)) cb.checked = true
+        l.appendChild(cb)
+        const t = document.createElement("span")
+        t.textContent = opt.label + (opt.description ? " — " + opt.description : "")
+        l.appendChild(t)
+        wrap.appendChild(l)
+      }
+      row.appendChild(wrap)
+      return row
+    }
+
+    if (f.type === "number" || f.type === "integer") {
+      const input = document.createElement("input")
+      input.type = "number"
+      input.dataset.key = f.key
+      if (f.minimum !== undefined) input.min = f.minimum
+      if (f.maximum !== undefined) input.max = f.maximum
+      if (f.default !== undefined) input.value = String(f.default)
+      row.appendChild(input)
+      return row
+    }
+
+    if (f.options && f.options.length) {
+      const sel = document.createElement("select")
+      sel.dataset.key = f.key
+      const empty = document.createElement("option")
+      empty.value = ""
+      empty.textContent = "Select…"
+      sel.appendChild(empty)
+      for (const opt of f.options) {
+        const o = document.createElement("option")
+        o.value = opt.value
+        o.textContent = opt.label + (opt.description ? " — " + opt.description : "")
+        sel.appendChild(o)
+      }
+      if (f.default !== undefined) sel.value = String(f.default)
+      row.appendChild(sel)
+      return row
+    }
+
+    const input = document.createElement("input")
+    input.type = "text"
+    input.dataset.key = f.key
+    if (f.placeholder) input.placeholder = f.placeholder
+    if (f.default !== undefined) input.value = String(f.default)
+    row.appendChild(input)
+    return row
+  }
+
+  function formDesc(text) {
+    const d = document.createElement("div")
+    d.className = "form-desc"
+    d.textContent = text
+    return d
+  }
+
+  function submitForm(form, card, err) {
+    const answer = {}
+    const missing = []
+    for (const f of form.fields || []) {
+      if (f.hidden || f.type === "external") continue
+      const el = card.querySelector('[data-key="' + cssEsc(f.key) + '"]')
+      if (!el) continue
+      if (f.type === "boolean") {
+        answer[f.key] = el.checked
+      } else if (f.type === "multiselect") {
+        const vals = Array.from(el.querySelectorAll("input:checked")).map((i) => i.value)
+        if (vals.length) answer[f.key] = vals
+        else if (f.required) missing.push(f.title || f.key)
+      } else if (f.type === "number" || f.type === "integer") {
+        if (el.value === "") {
+          if (f.required) missing.push(f.title || f.key)
+        } else {
+          answer[f.key] = f.type === "integer" ? parseInt(el.value, 10) : Number(el.value)
+        }
+      } else {
+        const v = el.value.trim()
+        if (!v) {
+          if (f.required) missing.push(f.title || f.key)
+        } else {
+          answer[f.key] = v
+        }
+      }
+    }
+    if (missing.length) {
+      err.textContent = "Required: " + missing.join(", ")
+      err.classList.remove("hidden")
+      return
+    }
+    err.classList.add("hidden")
+    vscode.postMessage({ type: "replyForm", formId: form.id, answer })
   }
 
   function renderStatus(message) {

@@ -1,4 +1,5 @@
 import * as http from "node:http"
+import type { FormInfo } from "../protocol"
 
 export interface AgentInfo {
   id: string
@@ -313,6 +314,34 @@ export class OpenCodeApi {
       "POST",
       `/api/session/${encodeURIComponent(sessionID)}/permission/${encodeURIComponent(requestID)}/reply`,
       { body: { decision } },
+    )
+  }
+
+  async listForms(sessionID: string): Promise<FormInfo[]> {
+    const res = await this.request<{ data: FormInfo[] }>(
+      "GET",
+      `/api/session/${encodeURIComponent(sessionID)}/form`,
+    )
+    return res.data ?? []
+  }
+
+  async replyForm(
+    sessionID: string,
+    formID: string,
+    answer: Record<string, unknown>,
+  ): Promise<void> {
+    await this.request<void>(
+      "POST",
+      `/api/session/${encodeURIComponent(sessionID)}/form/${encodeURIComponent(formID)}/reply`,
+      { body: { answer } },
+    )
+  }
+
+  async cancelForm(sessionID: string, formID: string, message?: string): Promise<void> {
+    await this.request<void>(
+      "DELETE",
+      `/api/session/${encodeURIComponent(sessionID)}/form/${encodeURIComponent(formID)}`,
+      { query: { message } },
     )
   }
 

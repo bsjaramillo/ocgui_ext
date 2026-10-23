@@ -42,6 +42,35 @@ export interface Attachment {
   mime: string
 }
 
+export interface FormOption {
+  value: string
+  label: string
+  description?: string
+}
+
+export interface FormField {
+  key: string
+  type: string
+  title?: string
+  description?: string
+  required?: boolean
+  hidden?: boolean
+  placeholder?: string
+  default?: unknown
+  options?: FormOption[]
+  custom?: boolean
+  minimum?: number
+  maximum?: number
+  url?: string
+}
+
+export interface FormInfo {
+  id: string
+  sessionID: string
+  title: string
+  fields: FormField[]
+}
+
 export type ServerStatus = "starting" | "ready" | "error"
 
 export type ServerMessage =
@@ -61,6 +90,7 @@ export type ServerMessage =
   | { type: "messages"; messages: ChatMessage[] }
   | { type: "sessions"; sessions: SessionSummary[] }
   | { type: "diffs"; diffs: FileDiffInfo[] }
+  | { type: "forms"; forms: FormInfo[] }
   | { type: "event"; event: any }
   | { type: "context"; context?: EditorContext }
   | { type: "busy"; busy: boolean }
@@ -82,6 +112,9 @@ export type ClientMessage =
   | { type: "revert"; messageId: string }
   | { type: "unrevert" }
   | { type: "permission"; permissionId: string; response: "once" | "always" | "reject" }
+  | { type: "replyForm"; formId: string; answer: Record<string, unknown> }
+  | { type: "cancelForm"; formId: string }
+  | { type: "openExternal"; url: string }
   | { type: "setModel"; model: string }
   | { type: "setAgent"; agent: string }
   | { type: "insertCode"; text: string }
