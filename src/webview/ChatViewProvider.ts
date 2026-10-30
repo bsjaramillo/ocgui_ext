@@ -9,6 +9,7 @@ import type {
   ServerStatus,
 } from "../protocol"
 import { toAttachment } from "../context/attachments"
+import { getEditorContext } from "../context/editorContext"
 
 class DiffContentProvider implements vscode.TextDocumentContentProvider {
   private readonly store = new Map<string, string>()
@@ -62,7 +63,10 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   setController(controller: ChatController): void {
     this.controller = controller
     controller.onMessage((msg) => {
-      if (msg.type === "init") this.lastInit = msg
+      if (msg.type === "init") {
+        this.lastInit = msg
+        if (msg.context) this.lastContext = msg.context
+      }
       if (msg.type === "diffs") this.lastDiffs = msg.diffs
       this.post(msg)
     })
@@ -99,13 +103,13 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         if (this.status === "ready" && this.lastInit) this.post(this.lastInit)
         this.post({ type: "diffs", diffs: this.lastDiffs })
         break
-      case "send":
-        void this.controller?.sendPrompt(
-          msg.text,
-          msg.includeContext ? this.lastContext : undefined,
-          msg.files,
-        )
+      case "send": {
+        const fresh = getEditorContext()
+        if (fresh) this.lastContext = fresh
+        const context = msg.includeContext ? (fresh ?? this.lastContext) : undefined
+        void this.controller?.sendPrompt(msg.text, context, msg.files)
         break
+      }
       case "pickFiles":
         void this.pickFiles()
         break

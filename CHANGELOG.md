@@ -2,6 +2,12 @@
 
 All notable changes to the OpenChat extension are documented here.
 
+## [0.2.2] - 2026-10-30
+
+### Fixed
+
+- The active editor context (file, line and selection) was sometimes not sent with the prompt. The initial context received on startup was not stored, and the context is now read fresh at send time. The prompt also labels it explicitly as `Active file:`.
+
 ## [0.2.1] - 2026-10-23
 
 ### Fixed

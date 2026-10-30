@@ -108,7 +108,10 @@ export class ChatController {
       this.emit({ type: "session", sessionId: created, messages: [], sessions })
     }
     const files = (attachments ?? []).map((a) => ({ uri: a.url, name: a.filename }))
-    this.log(`[prompt] session=${this.sessionId} chars=${text.length} files=${files.length}`)
+    this.log(
+      `[prompt] session=${this.sessionId} chars=${text.length} files=${files.length} ` +
+        `context=${context ? formatReference(context) : "none"}`,
+    )
     this.setBusy(true)
     try {
       await this.api.prompt(this.sessionId, { text: this.buildPrompt(text, context), files })
@@ -269,7 +272,7 @@ export class ChatController {
 
   private buildPrompt(text: string, context?: EditorContext): string {
     if (!context) return text
-    let body = `${text}\n\n${formatReference(context)}`
+    let body = `${text}\n\nActive file: ${formatReference(context)}`
     if (this.options.includeSelectionText && context.hasSelection && context.selectedText.trim()) {
       body += `\n\n\`\`\`${context.languageId}\n${context.selectedText}\n\`\`\``
     }
